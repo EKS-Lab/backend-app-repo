@@ -1,3 +1,4 @@
+# 빌드 스테이지
 FROM gradle:8.5-jdk17-alpine AS builder
 WORKDIR /app
 
@@ -10,7 +11,8 @@ COPY src src
 RUN chmod +x ./gradlew
 RUN ./gradlew bootJar --no-daemon
 
-FROM openjdk:17-jdk-slim
+# 실행 스테이지 - Eclipse Temurin 사용
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 COPY --from=builder /app/build/libs/app.jar app.jar
@@ -18,3 +20,9 @@ COPY --from=builder /app/build/libs/app.jar app.jar
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+**변경점:**
+```
+Before: FROM openjdk:17-jdk-slim
+After:  FROM eclipse-temurin:17-jre-alpine
