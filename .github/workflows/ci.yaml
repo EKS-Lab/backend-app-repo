@@ -56,3 +56,34 @@ jobs:
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY_NAME:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY_NAME:latest
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_NAME:latest
         echo "::notice::Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY_NAME:$IMAGE_TAG"
+
+
+    # ... (기존 docker push 단계 바로 뒤에 이어집니다)
+
+    # [추가] Helm 리포지토리의 태그 정보를 자동으로 수정하는 단계
+    - name: Update Helm Chart Image Tag
+      env:
+        EKS_TOKEN_TOKEN: ${{ secrets.EKS_TOKEN }}
+        # 👇 본인의 헬름 리포지토리 주소로 수정 필수! (https:// 빼고 입력)
+        # 예: github.com/my-org/k8s-helm-repo.git
+        HELM_REPO_URL: github.com/EKS-Lab/k8s-helm-repo.git
+      run: |
+        # 1. 깃 설정 (CI 로봇 이름 설정)
+        git config --global user.email "ci-bot@example.com"
+        git config --global user.name "CI Bot"
+        
+        # 2. 헬름 리포지토리 가져오기 (토큰 사용해서 로그인)
+        git clone https://$EKS_TOKEN@$HELM_REPO_URL helm-repo
+        cd helm-repo/backend-app
+        
+        # 3. values.yaml 파일 수정 (sed 명령어로 태그 교체)
+        # "tag: ..." 부분을 찾아서 현재 커밋 해시($GITHUB_SHA)로 바꿔치기
+        # (기존에 tag: "latest" 라고 적혀있어도 덮어씌웁니다)
+        sed -i "s/tag: .*/tag: \"$GITHUB_SHA\"/g" values.yaml
+        
+        # 4. 변경 사항 확인 및 푸시
+        echo "Changed tag to $GITHUB_SHA"
+        cat values.yaml
+        git add values.yaml
+        git commit -m "Update image tag to $GITHUB_SHA"
+        git push
