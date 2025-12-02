@@ -68,25 +68,21 @@ jobs:
         # 예: github.com/my-org/k8s-helm-repo.git
         HELM_REPO_URL: github.com/EKS-Lab/k8s-helm-repo.git
       run: |
-        # 1. 깃 설정 (CI 로봇 이름 설정)
         git config --global user.email "ci-bot@example.com"
         git config --global user.name "CI Bot"
         
-        # 2. 헬름 리포지토리 가져오기 (토큰 사용해서 로그인)
-        git clone https://$EKS_TOKEN@$HELM_REPO_URL helm-repo
+        # 1. 헬름 리포지토리 클론 (루트 폴더로 클론)
+        git clone https://$GH_TOKEN@$HELM_REPO_URL helm-repo
+        
+        # 2. 차트 폴더로 이동
         cd helm-repo/backend-app
         
-        # 3. values.yaml 파일 수정 (sed 명령어로 태그 교체)
-        # "tag: ..." 부분을 찾아서 현재 커밋 해시($GITHUB_SHA)로 바꿔치기
-        # (기존에 tag: "latest" 라고 적혀있어도 덮어씌웁니다)
+        # 3. values.yaml 태그 수정
         sed -i "s/tag: .*/tag: \"$GITHUB_SHA\"/g" values.yaml
         
-        # 4. 변경 사항 확인 및 푸시
-        echo "Changed tag to $GITHUB_SHA"
-        cat values.yaml
+        # 4. 커밋
         git add values.yaml
         git commit -m "Update image tag to $GITHUB_SHA"
-
-        git remote set-url origin https://$EKS_TOKEN@$HELM_REPO_URL
-
-        git push origin main
+        
+        # 5. [★여기가 수정됨] 푸시할 때 토큰 주소를 강제로 사용 (HEAD:main 사용)
+        git push https://$GH_TOKEN@$HELM_REPO_URL HEAD:main
