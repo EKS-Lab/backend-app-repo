@@ -86,4 +86,7 @@ jobs:
         cat values.yaml
         git add values.yaml
         git commit -m "Update image tag to $GITHUB_SHA"
-        git push
+
+        git remote set-url origin https://$EKS_TOKEN@$HELM_REPO_URL
+
+        git push origin main
