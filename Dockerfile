@@ -20,9 +20,3 @@ COPY --from=builder /app/build/libs/app.jar app.jar
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
-```
-
-**변경점:**
-```
-Before: FROM openjdk:17-jdk-slim
-After:  FROM eclipse-temurin:17-jre-alpine
